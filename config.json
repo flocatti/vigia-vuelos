@@ -1,0 +1,24 @@
+{
+  "pasajeros": 4,
+  "duracion_dias": 21,
+  "llegada": "JFK,EWR,LGA",
+  "regreso_desde": "MIA,FLL",
+  "salidas": [
+    "2027-12-26", "2027-12-28", "2027-12-30", "2027-12-31",
+    "2028-01-01", "2028-01-03", "2028-01-05"
+  ],
+  "origenes": [
+    {"codigo": "BUE", "nombre": "Buenos Aires", "aeropuertos": "EZE,AEP", "costo_llegar_usd": 0},
+    {"codigo": "ASU", "nombre": "Asunción", "aeropuertos": "ASU", "costo_llegar_usd": 600},
+    {"codigo": "MVD", "nombre": "Montevideo", "aeropuertos": "MVD", "costo_llegar_usd": 400},
+    {"codigo": "SCL", "nombre": "Santiago de Chile", "aeropuertos": "SCL", "costo_llegar_usd": 800},
+    {"codigo": "GRU", "nombre": "San Pablo", "aeropuertos": "GRU", "costo_llegar_usd": 900}
+  ],
+  "busquedas_por_dia": 8,
+  "ventana_reserva_dias": 330,
+  "dia_ensayo": 0,
+  "precio_es_total": true,
+  "umbral_usd": null,
+  "baja_alerta": 0.25,
+  "minimo_historial": 8
+}
