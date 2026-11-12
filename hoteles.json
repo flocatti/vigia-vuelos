@@ -22,7 +22,10 @@
       ],
       "dia_inicio": 0,
       "noches": 5,
-      "precio_simulado": 150
+      "precio_simulado": 150,
+      "extras": {
+        "comida_por_persona_dia": 45
+      }
     },
     {
       "codigo": "NYC_JC",
@@ -38,7 +41,10 @@
       ],
       "dia_inicio": 0,
       "noches": 5,
-      "precio_simulado": 170
+      "precio_simulado": 170,
+      "extras": {
+        "comida_por_persona_dia": 45
+      }
     },
     {
       "codigo": "NYC_MAN",
@@ -53,7 +59,10 @@
       ],
       "dia_inicio": 0,
       "noches": 5,
-      "precio_simulado": 220
+      "precio_simulado": 220,
+      "extras": {
+        "comida_por_persona_dia": 45
+      }
     },
     {
       "codigo": "ORL_CASA",
@@ -79,7 +88,10 @@
       "codigo": "ORL_DISNEY",
       "grupo": "Orlando",
       "nombre": "Orlando: hotel oficial de Disney",
-      "q": "Disney value resort hotels Walt Disney World",
+      "q": [
+        "Disney's All-Star Movies Resort",
+        "Disney's Pop Century Resort"
+      ],
       "ordenar_precio": false,
       "nombre_contiene": [
         "disney's"
@@ -89,7 +101,8 @@
       },
       "dia_inicio": 5,
       "noches": 12,
-      "precio_simulado": 160
+      "precio_simulado": 160,
+      "opiniones_minimas": 0
     },
     {
       "codigo": "ORL_UNIV",
@@ -114,7 +127,20 @@
       "q": "hotels in Miami Florida",
       "dia_inicio": 17,
       "noches": 4,
-      "precio_simulado": 180
+      "precio_simulado": 180,
+      "extras": {
+        "comida_por_persona_dia": 45
+      }
+    }
+  ],
+  "costos_fijos": [
+    {
+      "nombre": "Entradas Disney (4 personas, 5 días, un parque por día)",
+      "monto": 2920
+    },
+    {
+      "nombre": "Entradas Universal (4 personas, 5 días park-to-park, con Epic Universe)",
+      "monto": 1844
     }
   ]
 }
