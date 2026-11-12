@@ -3,24 +3,118 @@
   "llegada_real": "2028-01-01",
   "llegada_referencia": "2027-01-12",
   "ventana_reserva_dias": 330,
-  "dias_semana": [0],
-  "puntaje_minimo": 4.0,
+  "dias_semana": [
+    0
+  ],
+  "puntaje_minimo": 4,
   "opiniones_minimas": 100,
   "zonas": [
-    {"codigo": "NYC_LIC", "grupo": "Nueva York", "nombre": "Queens (Long Island City)",
-     "q": "hotels in Long Island City Queens New York", "dia_inicio": 0, "noches": 5, "precio_simulado": 150},
-    {"codigo": "NYC_JC", "grupo": "Nueva York", "nombre": "Jersey City (cerca del PATH)",
-     "q": "hotels in Jersey City near Newport PATH station", "dia_inicio": 0, "noches": 5, "precio_simulado": 170},
-    {"codigo": "NYC_MAN", "grupo": "Nueva York", "nombre": "Manhattan",
-     "q": "hotels in Manhattan New York", "dia_inicio": 0, "noches": 5, "precio_simulado": 220},
-    {"codigo": "ORL_CASA", "grupo": "Orlando", "nombre": "Orlando: casa o depto con cocina",
-     "q": "vacation rentals Kissimmee Florida near Disney World", "casa": true, "dormitorios": 2,
-     "puntaje_minimo": 4.3, "opiniones_minimas": 10, "dia_inicio": 5, "noches": 12, "precio_simulado": 140},
-    {"codigo": "ORL_DISNEY", "grupo": "Orlando", "nombre": "Orlando: hotel económico de Disney",
-     "q": "Disney's All-Star Resort Orlando", "dia_inicio": 5, "noches": 12, "precio_simulado": 160},
-    {"codigo": "ORL_UNIV", "grupo": "Orlando", "nombre": "Orlando: hotel económico de Universal",
-     "q": "Universal Endless Summer Resort Orlando", "dia_inicio": 5, "noches": 12, "precio_simulado": 130},
-    {"codigo": "MIA", "grupo": "Miami", "nombre": "Miami",
-     "q": "hotels in Miami Florida", "dia_inicio": 17, "noches": 4, "precio_simulado": 180}
+    {
+      "codigo": "NYC_LIC",
+      "grupo": "Nueva York",
+      "nombre": "Queens (Long Island City)",
+      "q": "hotels in Long Island City Queens New York",
+      "caja": [
+        40.735,
+        40.762,
+        -73.96,
+        -73.925
+      ],
+      "dia_inicio": 0,
+      "noches": 5,
+      "precio_simulado": 150
+    },
+    {
+      "codigo": "NYC_JC",
+      "grupo": "Nueva York",
+      "nombre": "Jersey City (cerca del PATH)",
+      "q": "hotels in Jersey City New Jersey",
+      "ordenar_precio": false,
+      "caja": [
+        40.705,
+        40.745,
+        -74.085,
+        -74.028
+      ],
+      "dia_inicio": 0,
+      "noches": 5,
+      "precio_simulado": 170
+    },
+    {
+      "codigo": "NYC_MAN",
+      "grupo": "Nueva York",
+      "nombre": "Manhattan",
+      "q": "hotels in Manhattan New York",
+      "caja": [
+        40.708,
+        40.8,
+        -74.02,
+        -73.965
+      ],
+      "dia_inicio": 0,
+      "noches": 5,
+      "precio_simulado": 220
+    },
+    {
+      "codigo": "ORL_CASA",
+      "grupo": "Orlando",
+      "nombre": "Orlando: casa o depto con cocina",
+      "q": "vacation rentals Kissimmee Florida near Disney World",
+      "casa": true,
+      "dormitorios": 2,
+      "puntaje_minimo": 4.3,
+      "opiniones_minimas": 10,
+      "extras": {
+        "comida_por_persona_dia": 35,
+        "auto_por_dia": 75,
+        "nafta_por_dia": 10,
+        "estacionamiento_por_dia": 35,
+        "dias_de_parque": 10
+      },
+      "dia_inicio": 5,
+      "noches": 12,
+      "precio_simulado": 110
+    },
+    {
+      "codigo": "ORL_DISNEY",
+      "grupo": "Orlando",
+      "nombre": "Orlando: hotel oficial de Disney",
+      "q": "Disney value resort hotels Walt Disney World",
+      "ordenar_precio": false,
+      "nombre_contiene": [
+        "disney's"
+      ],
+      "extras": {
+        "comida_por_persona_dia": 60
+      },
+      "dia_inicio": 5,
+      "noches": 12,
+      "precio_simulado": 160
+    },
+    {
+      "codigo": "ORL_UNIV",
+      "grupo": "Orlando",
+      "nombre": "Orlando: hotel oficial de Universal",
+      "q": "Universal Orlando Resort hotels",
+      "ordenar_precio": false,
+      "nombre_empieza": [
+        "universal"
+      ],
+      "extras": {
+        "comida_por_persona_dia": 60
+      },
+      "dia_inicio": 5,
+      "noches": 12,
+      "precio_simulado": 150
+    },
+    {
+      "codigo": "MIA",
+      "grupo": "Miami",
+      "nombre": "Miami",
+      "q": "hotels in Miami Florida",
+      "dia_inicio": 17,
+      "noches": 4,
+      "precio_simulado": 180
+    }
   ]
 }
