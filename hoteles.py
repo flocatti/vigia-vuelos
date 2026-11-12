@@ -1,121 +1,213 @@
-les · JSON
-{
-  "personas": 4,
-  "llegada_real": "2028-01-01",
-  "llegada_referencia": "2027-01-12",
-  "ventana_reserva_dias": 330,
-  "dias_semana": [
-    0
-  ],
-  "puntaje_minimo": 4,
-  "opiniones_minimas": 100,
-  "zonas": [
-    {
-      "codigo": "NYC_LIC",
-      "grupo": "Nueva York",
-      "nombre": "Queens (Long Island City)",
-      "q": "hotels in Long Island City Queens New York",
-      "caja": [
-        40.735,
-        40.762,
-        -73.96,
-        -73.925
-      ],
-      "dia_inicio": 0,
-      "noches": 5,
-      "precio_simulado": 150
-    },
-    {
-      "codigo": "NYC_JC",
-      "grupo": "Nueva York",
-      "nombre": "Jersey City (cerca del PATH)",
-      "q": "hotels in Jersey City New Jersey",
-      "ordenar_precio": false,
-      "caja": [
-        40.705,
-        40.745,
-        -74.085,
-        -74.028
-      ],
-      "dia_inicio": 0,
-      "noches": 5,
-      "precio_simulado": 170
-    },
-    {
-      "codigo": "NYC_MAN",
-      "grupo": "Nueva York",
-      "nombre": "Manhattan",
-      "q": "hotels in Manhattan New York",
-      "caja": [
-        40.708,
-        40.8,
-        -74.02,
-        -73.965
-      ],
-      "dia_inicio": 0,
-      "noches": 5,
-      "precio_simulado": 220
-    },
-    {
-      "codigo": "ORL_CASA",
-      "grupo": "Orlando",
-      "nombre": "Orlando: casa o depto con cocina",
-      "q": "vacation rentals Kissimmee Florida near Disney World",
-      "casa": true,
-      "dormitorios": 2,
-      "puntaje_minimo": 4.3,
-      "opiniones_minimas": 10,
-      "extras": {
-        "comida_por_persona_dia": 35,
-        "auto_por_dia": 75,
-        "nafta_por_dia": 10,
-        "estacionamiento_por_dia": 35,
-        "dias_de_parque": 10
-      },
-      "dia_inicio": 5,
-      "noches": 12,
-      "precio_simulado": 110
-    },
-    {
-      "codigo": "ORL_DISNEY",
-      "grupo": "Orlando",
-      "nombre": "Orlando: hotel oficial de Disney",
-      "q": "Disney value resort hotels Walt Disney World",
-      "ordenar_precio": false,
-      "nombre_contiene": [
-        "disney's"
-      ],
-      "extras": {
-        "comida_por_persona_dia": 60
-      },
-      "dia_inicio": 5,
-      "noches": 12,
-      "precio_simulado": 160
-    },
-    {
-      "codigo": "ORL_UNIV",
-      "grupo": "Orlando",
-      "nombre": "Orlando: hotel oficial de Universal",
-      "q": "Universal Orlando Resort hotels",
-      "ordenar_precio": false,
-      "nombre_empieza": [
-        "universal"
-      ],
-      "extras": {
-        "comida_por_persona_dia": 60
-      },
-      "dia_inicio": 5,
-      "noches": 12,
-      "precio_simulado": 150
-    },
-    {
-      "codigo": "MIA",
-      "grupo": "Miami",
-      "nombre": "Miami",
-      "q": "hotels in Miami Florida",
-      "dia_inicio": 17,
-      "noches": 4,
-      "precio_simulado": 180
-    }
-  ]
-}
+#!/usr/bin/env python3
+"""Vigía de hoteles: consulta Google Hoteles (vía SerpApi) para cada zona del
+viaje, guarda las 3 opciones más baratas en Supabase y manda un resumen por
+Telegram. Usa las mismas claves que vigia.py.
+ 
+Uso:
+    python hoteles.py             corre solo los días configurados
+    python hoteles.py --forzar    corre aunque hoy no toque
+    python hoteles.py --simular   prueba sin internet, con precios inventados
+"""
+import datetime as dt
+import json
+import os
+import random
+import sys
+import urllib.parse
+ 
+from vigia import AQUI, HOY, SIMULAR, _sb_cabeceras, avisar, http_json
+ 
+ 
+def cargar_config():
+    with open(os.path.join(AQUI, "hoteles.json"), encoding="utf-8") as f:
+        return json.load(f)
+ 
+ 
+def minimos_previos(ensayo):
+    """Precio total más bajo ya visto por zona (en el mismo modo)."""
+    if SIMULAR:
+        return {}
+    url = (os.environ["SUPABASE_URL"].rstrip("/") + "/rest/v1/hoteles_precios"
+           f"?select=zona,total&ensayo=eq.{str(ensayo).lower()}&order=total.asc&limit=5000")
+    filas = http_json(url, cabeceras=_sb_cabeceras())
+    if not isinstance(filas, list):
+        raise RuntimeError(f"Supabase respondió algo inesperado: {filas}")
+    minimos = {}
+    for f in filas:
+        minimos.setdefault(f["zona"], f["total"])
+    return minimos
+ 
+ 
+def guardar(filas):
+    if SIMULAR or not filas:
+        return
+    url = os.environ["SUPABASE_URL"].rstrip("/") + "/rest/v1/hoteles_precios"
+    resp = http_json(url, datos=filas, cabeceras=_sb_cabeceras(), metodo="POST")
+    if resp:
+        raise RuntimeError(f"Supabase no guardó los hoteles: {resp}")
+ 
+ 
+def consultar(cfg, zona, entrada, salida, con_filtros=True):
+    params = {"engine": "google_hotels", "q": zona["q"],
+              "check_in_date": entrada.isoformat(), "check_out_date": salida.isoformat(),
+              "adults": str(cfg["personas"]), "currency": "USD", "hl": "es", "gl": "us",
+              "api_key": os.environ["SERPAPI_KEY"]}
+    if zona.get("casa"):
+        params["vacation_rentals"] = "true"
+        params["bedrooms"] = str(zona.get("dormitorios", 2))
+    if con_filtros:
+        if zona.get("ordenar_precio", True):
+            params["sort_by"] = "3"                  # precio más bajo primero
+        if not zona.get("casa"):
+            params["rating"] = "8"                   # 4 puntos de opinión o más
+    return http_json("https://serpapi.com/search.json?" + urllib.parse.urlencode(params))
+ 
+ 
+def esta_en_la_zona(prop, zona):
+    """Descarta lo que Google devuelve de más: otro barrio u otra cadena."""
+    nombre = (prop.get("name") or "").lower().replace("’", "'")
+    if zona.get("nombre_contiene") and not any(t in nombre for t in zona["nombre_contiene"]):
+        return False
+    if zona.get("nombre_empieza") and not any(nombre.startswith(t) for t in zona["nombre_empieza"]):
+        return False
+    if zona.get("caja"):
+        gps = prop.get("gps_coordinates") or {}
+        lat, lon = gps.get("latitude"), gps.get("longitude")
+        lat_min, lat_max, lon_min, lon_max = zona["caja"]
+        if lat is None or lon is None or not (lat_min <= lat <= lat_max and lon_min <= lon <= lon_max):
+            return False
+    return True
+ 
+ 
+def buscar(cfg, zona, entrada, salida):
+    """Lista de hasta 3 opciones (más barata primero) para la zona."""
+    noches = (salida - entrada).days
+    if SIMULAR:
+        base = zona.get("precio_simulado", 150)
+        return [{"nombre": f"Opción simulada {i + 1}", "noche": round(base * f),
+                 "total": round(base * f) * noches, "puntaje": 4.2, "link": "https://www.google.com/travel/hotels"}
+                for i, f in enumerate(sorted(random.uniform(0.8, 1.4) for _ in range(3)))]
+    datos = consultar(cfg, zona, entrada, salida)
+    if not datos or datos.get("error"):
+        print(f"  reintento sin filtros ({(datos or {}).get('error', 'respuesta vacía')})")
+        datos = consultar(cfg, zona, entrada, salida, con_filtros=False)
+    if not datos or datos.get("error"):
+        print(f"  sin resultados ({(datos or {}).get('error', 'respuesta vacía')})")
+        return []
+    link_general = datos.get("search_metadata", {}).get("google_hotels_url", "")
+    min_puntaje = zona.get("puntaje_minimo", cfg["puntaje_minimo"])
+    min_opiniones = zona.get("opiniones_minimas", cfg["opiniones_minimas"])
+    propiedades = datos.get("properties", [])
+    opciones = []
+    for p in propiedades:
+        noche = (p.get("rate_per_night") or {}).get("extracted_lowest")
+        total = (p.get("total_rate") or {}).get("extracted_lowest")
+        if not noche and not total:
+            continue
+        if (p.get("overall_rating") or 0) < min_puntaje or (p.get("reviews") or 0) < min_opiniones:
+            continue
+        if not esta_en_la_zona(p, zona):
+            continue
+        total = total or noche * noches
+        opciones.append({"nombre": p.get("name", "?"), "noche": round(noche or total / noches),
+                         "total": round(total), "puntaje": round(p.get("overall_rating") or 0, 1),
+                         "link": p.get("link") or link_general})
+    print(f"  {len(propiedades)} resultados de Google, {len(opciones)} dentro de la zona")
+    return sorted(opciones, key=lambda o: o["total"])[:3]
+ 
+ 
+def costo_extra(cfg, zona):
+    """Comida, auto y estacionamiento estimados para toda la estadía en la zona."""
+    e = zona.get("extras")
+    if not e:
+        return 0, ""
+    n = zona["noches"]
+    comida = e.get("comida_por_persona_dia", 0) * cfg["personas"] * n
+    auto = (e.get("auto_por_dia", 0) + e.get("nafta_por_dia", 0)) * n
+    estac = e.get("estacionamiento_por_dia", 0) * e.get("dias_de_parque", 0)
+    partes = [f"comida {comida}"]
+    if auto:
+        partes.append(f"auto y nafta {auto}")
+    if estac:
+        partes.append(f"estacionamiento {estac}")
+    return comida + auto + estac, ", ".join(partes)
+ 
+ 
+def main():
+    cfg = cargar_config()
+    if HOY.weekday() not in cfg["dias_semana"] and not SIMULAR and "--forzar" not in sys.argv:
+        print("Hoy no toca consultar hoteles.")
+        return
+    real = dt.date.fromisoformat(cfg["llegada_real"])
+    referencia = dt.date.fromisoformat(cfg["llegada_referencia"])
+    fin = max(z["dia_inicio"] + z["noches"] for z in cfg["zonas"])
+    if real + dt.timedelta(days=fin) <= HOY + dt.timedelta(days=cfg["ventana_reserva_dias"]):
+        llegada, ensayo = real, False
+    elif referencia > HOY + dt.timedelta(days=2):
+        llegada, ensayo = referencia, True
+    else:
+        print("La fecha de referencia ya pasó y las del viaje aún no están a la venta.")
+        return
+    minimos = minimos_previos(ensayo)
+    nuevas, bloques, mejor_por_grupo = [], [], {}
+    for zona in cfg["zonas"]:
+        entrada = llegada + dt.timedelta(days=zona["dia_inicio"])
+        salida = entrada + dt.timedelta(days=zona["noches"])
+        print(f"{zona['nombre']}: {entrada} a {salida}")
+        try:
+            opciones = buscar(cfg, zona, entrada, salida)
+        except Exception as e:
+            print("  error:", e)
+            continue
+        if not opciones:
+            bloques.append(f"{zona['nombre']}: sin resultados dentro de la zona")
+            continue
+        lineas = [f"{zona['nombre']} ({zona['noches']} noches desde {entrada:%d/%m/%Y})"]
+        for i, o in enumerate(opciones):
+            lineas.append(f" {i + 1}. {o['nombre']}: USD {o['noche']}/noche, total USD {o['total']} (★{o['puntaje']})")
+            nuevas.append({"zona": zona["codigo"], "entrada": entrada.isoformat(),
+                           "salida": salida.isoformat(), "personas": cfg["personas"],
+                           "puesto": i + 1, "nombre": o["nombre"], "precio_noche": o["noche"],
+                           "total": o["total"], "puntaje": o["puntaje"], "link": o["link"],
+                           "ensayo": ensayo})
+        mejor = opciones[0]
+        extra, detalle = costo_extra(cfg, zona)
+        if extra:
+            lineas.append(f" + estimado {detalle} = USD {extra}")
+            lineas.append(f" COSTO REAL de la opción 1: USD {mejor['total'] + extra}")
+        previo = minimos.get(zona["codigo"])
+        if previo and mejor["total"] < previo:
+            lineas.append(f" ⬇ Nuevo mínimo de alojamiento (antes USD {previo})")
+        lineas.append(f" {mejor['link']}")
+        bloques.append("\n".join(lineas))
+        g = zona["grupo"]
+        costo = mejor["total"] + extra
+        if g not in mejor_por_grupo or costo < mejor_por_grupo[g][1]:
+            mejor_por_grupo[g] = (zona["nombre"], costo)
+    guardar(nuevas)
+    if not nuevas:
+        print("No se obtuvo ningún precio.")
+        return
+    titulo = ("🏨 Hoteles — precios de REFERENCIA (un año antes del viaje)" if ensayo
+              else "🏨 Hoteles — precios del viaje")
+    # Telegram corta los mensajes de más de 4096 caracteres: se manda en partes.
+    partes, actual = [], f"{titulo}\nHabitación o casa para {cfg['personas']}."
+    for b in bloques:
+        if len(actual) + len(b) > 3500:
+            partes.append(actual)
+            actual = b
+        else:
+            actual += "\n\n" + b
+    partes.append(actual)
+    for p in partes:
+        avisar(p)
+    resumen = "\n".join(f" {g}: {n} — USD {t}" for g, (n, t) in mejor_por_grupo.items())
+    suma = sum(t for _, t in mejor_por_grupo.values())
+    avisar("Combinación más barata\n(Orlando incluye comida, auto y estacionamiento estimados):\n"
+           f"{resumen}\n Total: USD {suma}")
+    print(f"\nListo: {len(nuevas)} precios de hoteles guardados.")
+ 
+ 
+if __name__ == "__main__":
+    main()
+ 
