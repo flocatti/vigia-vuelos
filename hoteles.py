@@ -87,17 +87,25 @@ def buscar(cfg, zona, entrada, salida):
         return [{"nombre": f"Opción simulada {i + 1}", "noche": round(base * f),
                  "total": round(base * f) * noches, "puntaje": 4.2, "link": "https://www.google.com/travel/hotels"}
                 for i, f in enumerate(sorted(random.uniform(0.8, 1.4) for _ in range(3)))]
-    datos = consultar(cfg, zona, entrada, salida)
-    if not datos or datos.get("error"):
-        print(f"  reintento sin filtros ({(datos or {}).get('error', 'respuesta vacía')})")
-        datos = consultar(cfg, zona, entrada, salida, con_filtros=False)
-    if not datos or datos.get("error"):
-        print(f"  sin resultados ({(datos or {}).get('error', 'respuesta vacía')})")
-        return []
-    link_general = datos.get("search_metadata", {}).get("google_hotels_url", "")
+    consultas = zona["q"] if isinstance(zona["q"], list) else [zona["q"]]
     min_puntaje = zona.get("puntaje_minimo", cfg["puntaje_minimo"])
     min_opiniones = zona.get("opiniones_minimas", cfg["opiniones_minimas"])
-    propiedades = datos.get("properties", [])
+    propiedades, link_general = [], ""
+    for q in consultas:
+        z = dict(zona, q=q)
+        datos = consultar(cfg, z, entrada, salida)
+        if not datos or datos.get("error"):
+            print(f"  reintento sin filtros ({(datos or {}).get('error', 'respuesta vacía')})")
+            datos = consultar(cfg, z, entrada, salida, con_filtros=False)
+        if not datos or datos.get("error"):
+            print(f"  sin resultados para '{q}' ({(datos or {}).get('error', 'respuesta vacía')})")
+            continue
+        link_general = link_general or datos.get("search_metadata", {}).get("google_hotels_url", "")
+        encontradas = datos.get("properties") or []
+        if not encontradas and datos.get("name") and datos.get("rate_per_night"):
+            encontradas = [datos]      # Google devolvió la ficha de un solo hotel
+        print(f"  '{q}': " + "; ".join(p.get("name", "?") for p in encontradas[:8]))
+        propiedades += encontradas
     opciones = []
     for p in propiedades:
         noche = (p.get("rate_per_night") or {}).get("extracted_lowest")
@@ -203,8 +211,14 @@ def main():
         avisar(p)
     resumen = "\n".join(f" {g}: {n} — USD {t}" for g, (n, t) in mejor_por_grupo.items())
     suma = sum(t for _, t in mejor_por_grupo.values())
-    avisar("Combinación más barata\n(Orlando incluye comida, auto y estacionamiento estimados):\n"
-           f"{resumen}\n Total: USD {suma}")
+    fijos = cfg.get("costos_fijos", [])
+    lineas_fijas = "".join(f"\n {c['nombre']}: USD {c['monto']}" for c in fijos)
+    total = suma + sum(c["monto"] for c in fijos)
+    avisar("💰 Presupuesto del viaje SIN vuelos\n"
+           "Alojamiento más barato de cada ciudad + comida estimada\n"
+           "(en Orlando también auto, nafta y estacionamiento si es casa):\n"
+           f"{resumen}{lineas_fijas}\n\n TOTAL: USD {total}\n"
+           "Comida, auto y entradas son estimaciones fijas de hoteles.json.")
     print(f"\nListo: {len(nuevas)} precios de hoteles guardados.")
  
  
