@@ -14,18 +14,22 @@ jobs:
   vigia:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      FORZAR: ${{ inputs.forzar }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Consultar precios
-        env:
-          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          FORZAR: ${{ inputs.forzar }}
         run: |
           if [ "$FORZAR" = "true" ]; then python vigia.py --forzar; else python vigia.py; fi
+      - name: Consultar hoteles
+        if: always()
+        run: |
+          if [ "$FORZAR" = "true" ]; then python hoteles.py --forzar; else python hoteles.py; fi
