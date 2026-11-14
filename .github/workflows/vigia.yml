@@ -33,3 +33,7 @@ jobs:
         if: always()
         run: |
           if [ "$FORZAR" = "true" ]; then python hoteles.py --forzar; else python hoteles.py; fi
+      - name: Plan de pagos y ahorro
+        if: always()
+        run: |
+          if [ "$FORZAR" = "true" ]; then python plan.py --forzar; else python plan.py; fi
