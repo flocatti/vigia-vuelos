@@ -2,7 +2,7 @@
 """Vigía de hoteles: consulta Google Hoteles (vía SerpApi) para cada zona del
 viaje, guarda las 3 opciones más baratas en Supabase y manda un resumen por
 Telegram. Usa las mismas claves que vigia.py.
- 
+
 Uso:
     python hoteles.py             corre solo los días configurados
     python hoteles.py --forzar    corre aunque hoy no toque
@@ -14,15 +14,15 @@ import os
 import random
 import sys
 import urllib.parse
- 
+
 from vigia import AQUI, HOY, SIMULAR, _sb_cabeceras, avisar, http_json
- 
- 
+
+
 def cargar_config():
     with open(os.path.join(AQUI, "hoteles.json"), encoding="utf-8") as f:
         return json.load(f)
- 
- 
+
+
 def minimos_previos(ensayo):
     """Precio total más bajo ya visto por zona (en el mismo modo)."""
     if SIMULAR:
@@ -36,8 +36,8 @@ def minimos_previos(ensayo):
     for f in filas:
         minimos.setdefault(f["zona"], f["total"])
     return minimos
- 
- 
+
+
 def guardar(filas):
     if SIMULAR or not filas:
         return
@@ -45,8 +45,27 @@ def guardar(filas):
     resp = http_json(url, datos=filas, cabeceras=_sb_cabeceras(), metodo="POST")
     if resp:
         raise RuntimeError(f"Supabase no guardó los hoteles: {resp}")
- 
- 
+
+
+def vuelo_mas_barato():
+    """(total para todos, origen, es_ensayo) de la última consulta de vuelos, o None."""
+    if SIMULAR:
+        return 4300, "ASU", True
+    try:
+        url = (os.environ["SUPABASE_URL"].rstrip("/") + "/rest/v1/vuelos_precios"
+               "?select=origen,total_ajustado,fecha_consulta,ensayo&order=fecha_consulta.desc&limit=60")
+        filas = http_json(url, cabeceras=_sb_cabeceras())
+        if not isinstance(filas, list) or not filas:
+            return None
+        dia, modo = filas[0]["fecha_consulta"][:10], filas[0]["ensayo"]
+        del_dia = [f for f in filas if f["fecha_consulta"][:10] == dia and f["ensayo"] == modo]
+        mejor = min(del_dia, key=lambda f: f["total_ajustado"])
+        return mejor["total_ajustado"], mejor["origen"], modo
+    except Exception as e:
+        print("  no se pudo leer el precio de vuelos:", e)
+        return None
+
+
 def consultar(cfg, zona, entrada, salida, con_filtros=True):
     params = {"engine": "google_hotels", "q": zona["q"],
               "check_in_date": entrada.isoformat(), "check_out_date": salida.isoformat(),
@@ -61,8 +80,8 @@ def consultar(cfg, zona, entrada, salida, con_filtros=True):
         if not zona.get("casa"):
             params["rating"] = "8"                   # 4 puntos de opinión o más
     return http_json("https://serpapi.com/search.json?" + urllib.parse.urlencode(params))
- 
- 
+
+
 def esta_en_la_zona(prop, zona):
     """Descarta lo que Google devuelve de más: otro barrio u otra cadena."""
     nombre = (prop.get("name") or "").lower().replace("’", "'")
@@ -77,8 +96,8 @@ def esta_en_la_zona(prop, zona):
         if lat is None or lon is None or not (lat_min <= lat <= lat_max and lon_min <= lon <= lon_max):
             return False
     return True
- 
- 
+
+
 def buscar(cfg, zona, entrada, salida):
     """Lista de hasta 3 opciones (más barata primero) para la zona."""
     noches = (salida - entrada).days
@@ -86,7 +105,7 @@ def buscar(cfg, zona, entrada, salida):
         base = zona.get("precio_simulado", 150)
         return [{"nombre": f"Opción simulada {i + 1}", "noche": round(base * f),
                  "total": round(base * f) * noches, "puntaje": 4.2, "link": "https://www.google.com/travel/hotels"}
-                for i, f in enumerate(sorted(random.uniform(0.8, 1.4) for _ in range(3)))]
+                for i, f in enumerate(sorted(random.uniform(0.8, 1.4) for _ in range(cfg.get("opciones_por_zona", 3))))]
     consultas = zona["q"] if isinstance(zona["q"], list) else [zona["q"]]
     min_puntaje = zona.get("puntaje_minimo", cfg["puntaje_minimo"])
     min_opiniones = zona.get("opiniones_minimas", cfg["opiniones_minimas"])
@@ -121,9 +140,9 @@ def buscar(cfg, zona, entrada, salida):
                          "total": round(total), "puntaje": round(p.get("overall_rating") or 0, 1),
                          "link": p.get("link") or link_general})
     print(f"  {len(propiedades)} resultados de Google, {len(opciones)} dentro de la zona")
-    return sorted(opciones, key=lambda o: o["total"])[:3]
- 
- 
+    return sorted(opciones, key=lambda o: o["total"])[:cfg.get("opciones_por_zona", 3)]
+
+
 def costo_extra(cfg, zona):
     """Comida, auto y estacionamiento estimados para toda la estadía en la zona."""
     e = zona.get("extras")
@@ -139,8 +158,8 @@ def costo_extra(cfg, zona):
     if estac:
         partes.append(f"estacionamiento {estac}")
     return comida + auto + estac, ", ".join(partes)
- 
- 
+
+
 def main():
     cfg = cargar_config()
     if HOY.weekday() not in cfg["dias_semana"] and not SIMULAR and "--forzar" not in sys.argv:
@@ -210,18 +229,34 @@ def main():
     for p in partes:
         avisar(p)
     resumen = "\n".join(f" {g}: {n} — USD {t}" for g, (n, t) in mejor_por_grupo.items())
-    suma = sum(t for _, t in mejor_por_grupo.values())
+    total = sum(t for _, t in mejor_por_grupo.values())
     fijos = cfg.get("costos_fijos", [])
     lineas_fijas = "".join(f"\n {c['nombre']}: USD {c['monto']}" for c in fijos)
-    total = suma + sum(c["monto"] for c in fijos)
-    avisar("💰 Presupuesto del viaje SIN vuelos\n"
+    total += sum(c["monto"] for c in fijos)
+    vuelo = vuelo_mas_barato()
+    if vuelo:
+        monto, origen, de_ensayo = vuelo
+        nota = " (fecha de prueba en temporada baja: en fin de año va a ser más caro)" if de_ensayo else ""
+        linea_vuelo = f"\n Vuelos desde {origen}, con el costo de llegar: USD {monto}{nota}"
+        total += monto
+    else:
+        linea_vuelo = "\n Vuelos: todavía sin precio"
+    tope = cfg.get("tope_usd")
+    if tope:
+        dif = tope - total
+        veredicto = (f"\n ✅ Dentro del tope de USD {tope}: sobran USD {dif}" if dif >= 0
+                     else f"\n ⚠️ Supera el tope de USD {tope} por USD {-dif}")
+    else:
+        veredicto = ""
+    avisar("💰 Presupuesto total del viaje\n"
            "Alojamiento más barato de cada ciudad + comida estimada\n"
            "(en Orlando también auto, nafta y estacionamiento si es casa):\n"
-           f"{resumen}{lineas_fijas}\n\n TOTAL: USD {total}\n"
-           "Comida, auto y entradas son estimaciones fijas de hoteles.json.")
+           f"{resumen}{lineas_fijas}{linea_vuelo}\n\n TOTAL: USD {total}{veredicto}\n\n"
+           "Comida, auto, entradas y traslados son estimaciones fijas de hoteles.json.")
     print(f"\nListo: {len(nuevas)} precios de hoteles guardados.")
- 
- 
+
+
 if __name__ == "__main__":
     main()
+
  
