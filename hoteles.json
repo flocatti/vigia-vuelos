@@ -78,10 +78,10 @@
         "auto_por_dia": 75,
         "nafta_por_dia": 10,
         "estacionamiento_por_dia": 35,
-        "dias_de_parque": 10
+        "dias_de_parque": 7
       },
       "dia_inicio": 5,
-      "noches": 12,
+      "noches": 10,
       "precio_simulado": 110
     },
     {
@@ -100,7 +100,7 @@
         "comida_por_persona_dia": 60
       },
       "dia_inicio": 5,
-      "noches": 12,
+      "noches": 10,
       "precio_simulado": 160,
       "opiniones_minimas": 0
     },
@@ -117,30 +117,64 @@
         "comida_por_persona_dia": 60
       },
       "dia_inicio": 5,
-      "noches": 12,
+      "noches": 10,
       "precio_simulado": 150
-    },
-    {
-      "codigo": "MIA",
-      "grupo": "Miami",
-      "nombre": "Miami",
-      "q": "hotels in Miami Florida",
-      "dia_inicio": 17,
-      "noches": 4,
-      "precio_simulado": 180,
-      "extras": {
-        "comida_por_persona_dia": 45
-      }
     }
   ],
   "costos_fijos": [
     {
-      "nombre": "Entradas Disney (4 personas, 5 días, un parque por día)",
-      "monto": 2920
+      "nombre": "Entradas Disney (4 personas, 4 días, un parque por día)",
+      "monto": 2736
     },
     {
-      "nombre": "Entradas Universal (4 personas, 5 días park-to-park, con Epic Universe)",
-      "monto": 1844
+      "nombre": "Entradas Universal (4 personas, 3 días park-to-park, con Epic Universe)",
+      "monto": 1724
+    },
+    {
+      "nombre": "Impuestos de las entradas (6,5 % estimado)",
+      "monto": 290
+    },
+    {
+      "nombre": "Vuelo interno Nueva York–Orlando para 4, con carry-on (estimado)",
+      "monto": 350
+    },
+    {
+      "nombre": "Subte y traslados de aeropuerto en Nueva York (estimado)",
+      "monto": 250
+    },
+    {
+      "nombre": "Atracciones pagas en Nueva York (estimado, a definir)",
+      "monto": 300
+    },
+    {
+      "nombre": "Asistencia al viajero para 4 (estimado)",
+      "monto": 500
+    },
+    {
+      "nombre": "Limpieza de la casa de Orlando (estimado)",
+      "monto": 150
+    },
+    {
+      "nombre": "Peajes en Orlando (estimado)",
+      "monto": 50
+    },
+    {
+      "nombre": "Internet en los celulares (estimado)",
+      "monto": 60
+    },
+    {
+      "nombre": "2 valijas grandes compradas en Orlando (estimado)",
+      "monto": 120
+    },
+    {
+      "nombre": "2 valijas despachadas en el vuelo de vuelta (estimado)",
+      "monto": 140
+    },
+    {
+      "nombre": "Compras en outlets (monto a definir por ustedes)",
+      "monto": 0
     }
-  ]
+  ],
+  "tope_usd": 15000,
+  "opciones_por_zona": 5
 }
