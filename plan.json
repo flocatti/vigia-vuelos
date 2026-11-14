@@ -1,0 +1,81 @@
+{
+  "tope_usd": 15000,
+  "pagos": [
+    {
+      "clave": "vuelos",
+      "nombre": "Vuelos internacionales (4)",
+      "monto": 4300,
+      "mes": "2027-03",
+      "medio": "tarjeta",
+      "nota": "Comprar cuando el vigía avise un buen precio. Mirar si la agencia ofrece cuotas en dólares."
+    },
+    {
+      "clave": "hotelny",
+      "nombre": "Hotel en Nueva York, 5 noches",
+      "monto": 750,
+      "mes": "2027-04",
+      "medio": "tarjeta",
+      "nota": "Reservar con cancelación gratis. Si deja pagar al llegar, se paga recién en el viaje."
+    },
+    {
+      "clave": "casa",
+      "nombre": "Casa en Orlando, 10 noches, con limpieza",
+      "monto": 1100,
+      "mes": "2027-04",
+      "medio": "tarjeta",
+      "nota": "Reservar con cancelación gratis y revisar el precio cada tanto."
+    },
+    {
+      "clave": "entradas",
+      "nombre": "Entradas Disney y Universal, con impuestos",
+      "monto": 4750,
+      "mes": "2027-08",
+      "medio": "tarjeta",
+      "nota": "Comprar cuando salgan a la venta las fechas de enero de 2028. Mirar promos de días gratis."
+    },
+    {
+      "clave": "interno",
+      "nombre": "Vuelo Nueva York–Orlando (4), con carry-on",
+      "monto": 350,
+      "mes": "2027-10",
+      "medio": "tarjeta",
+      "nota": "Elegir aerolínea que incluya carry-on en el precio."
+    },
+    {
+      "clave": "auto",
+      "nombre": "Auto en Orlando, 10 días",
+      "monto": 750,
+      "mes": "2027-11",
+      "medio": "tarjeta",
+      "nota": "Reservar con cancelación gratis; el seguro tiene que estar incluido."
+    },
+    {
+      "clave": "asistencia",
+      "nombre": "Asistencia al viajero (4)",
+      "monto": 500,
+      "mes": "2027-11",
+      "medio": "tarjeta",
+      "nota": "Antes de comprar, revisar si la tarjeta ya trae cobertura."
+    },
+    {
+      "clave": "valijas",
+      "nombre": "2 valijas despachadas en la vuelta",
+      "monto": 140,
+      "mes": "2027-12",
+      "medio": "tarjeta",
+      "nota": "Comprarlas online antes del vuelo: en el aeropuerto salen más caras."
+    },
+    {
+      "clave": "efectivo",
+      "nombre": "Efectivo para llevar (comida, nafta, estacionamiento, subte, paseos, 2 valijas)",
+      "monto": 3450,
+      "mes": "2027-12",
+      "medio": "efectivo",
+      "nota": "No incluye compras en outlets. Entre los cuatro, si supera 10.000 dólares hay que declararlo al entrar a Estados Unidos."
+    }
+  ],
+  "recordatorios": [
+    "Pagar el resumen de la tarjeta en dólares: en pesos suma la percepción del 30 %.",
+    "Revisar el vencimiento de pasaportes y visas de los cuatro."
+  ]
+}
